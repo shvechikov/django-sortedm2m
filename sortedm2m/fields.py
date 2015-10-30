@@ -5,7 +5,13 @@ from django.db import router
 from django.db import transaction
 from django.db import models
 from django.db.models import signals
-from django.db.models.fields.related import add_lazy_relation, create_many_related_manager
+from django.db.models.fields.related import add_lazy_relation
+
+try:
+    from django.db.models.fields.related import create_many_related_manager as create_forward_many_to_many_manager
+except ImportError:
+    from django.db.models.fields.related_descriptors import create_forward_many_to_many_manager
+
 from django.db.models.fields.related import ManyToManyField
 from django.db.models.fields.related import RECURSIVE_RELATIONSHIP_CONSTANT
 from django.utils import six
@@ -36,7 +42,7 @@ else:
 
 
 def create_sorted_many_related_manager(superclass, rel, *args):
-    RelatedManager = create_many_related_manager(superclass, rel, *args)
+    RelatedManager = create_forward_many_to_many_manager(superclass, rel, *args)
 
     class SortedRelatedManager(RelatedManager):
         def get_queryset(self):
@@ -188,10 +194,13 @@ try:
                 self.field.rel
             )
 except ImportError:
-    from django.db.models.fields.related import ManyRelatedObjectsDescriptor
+    try:
+        from django.db.models.fields.related import ManyRelatedObjectsDescriptor as ManyToManyDescriptor
+    except ImportError:
+        # ReverseManyRelatedObjectsDescriptor was removed from Django 1.9
+        from django.db.models.fields.related_descriptors import ManyToManyDescriptor
 
-    # ReverseManyRelatedObjectsDescriptor was removed from Django 1.9
-    class ReverseSortedManyRelatedObjectsDescriptor(ManyRelatedObjectsDescriptor):
+    class ReverseSortedManyRelatedObjectsDescriptor(ManyToManyDescriptor):
         def __init__(self, field):
             super(ReverseSortedManyRelatedObjectsDescriptor, self).__init__(field.remote_field)
 
