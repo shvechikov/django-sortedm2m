@@ -63,7 +63,7 @@ long_description = UltraMagicString('\n\n'.join((
 
 setup(
     name = 'django-sortedm2m',
-    version = find_version('sortedm2m', '__init__.py'),
+    version = find_version('sortedm2m', '__init__.py') + '.post1',
     url = 'http://github.com/gregmuellegger/django-sortedm2m',
     license = 'BSD',
     description =
